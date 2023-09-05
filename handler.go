@@ -10,8 +10,8 @@ type Handler struct {
 	v1 *V1
 }
 
-func (h Handler) root(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{"name": "John", "age": "25"}
+func (h Handler) pong(w http.ResponseWriter, r *http.Request) {
+	data := map[string]string{"data": "pong"}
 
 	respondWithJson(w, 200, data)
 }
@@ -23,7 +23,8 @@ func (v1 V1) root(w http.ResponseWriter, r *http.Request) {
 }
 
 func (v1 V1) users(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{"v1": "users", "fkd": "30kk"}
+	// data := map[string]string{"v1": "users", "fkd": "30kk"}
 
-	respondWithJson(w, 200, data)
+	// respondWithJson(w, 200, data)
+	respondWithError(w, http.StatusNotImplemented, "not implemented")
 }

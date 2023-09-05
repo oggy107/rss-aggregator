@@ -35,7 +35,10 @@ func main() {
 		v1: &V1{},
 	}
 
-	router.Get("/", handler.root)
+	router.Get("/ping", handler.pong)
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/v1", http.StatusFound)
+	})
 
 	router.Route("/v1", func(v1 chi.Router) {
 		v1.Get("/", handler.v1.root)
