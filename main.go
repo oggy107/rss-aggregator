@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/oggy107/rss-aggregator/internal/database"
+	"github.com/oggy107/rss-aggregator/utils"
 )
 
 func runServer(router *chi.Mux) {
@@ -20,7 +20,7 @@ func runServer(router *chi.Mux) {
 	SERVER_ADDR := SERVER_NAME + ":" + PORT
 
 	if PORT == "" {
-		logFatal("PORT is not set")
+		utils.LogFatal("PORT is not set")
 	}
 
 	log.Println("Starting server at:", SERVER_ADDR)
@@ -34,13 +34,13 @@ func connectDB() (conn *sql.DB) {
 	CONNECTION_STRING := os.Getenv("POSTGRES_CONNECTION")
 
 	if CONNECTION_STRING == "" {
-		logFatal("Database connection string is not set")
+		utils.LogFatal("Database connection string is not set")
 	}
 
 	conn, err := sql.Open("postgres", CONNECTION_STRING)
 
 	if err != nil {
-		logFatal(err.Error())
+		utils.LogFatal(err.Error())
 	}
 
 	return conn
@@ -48,17 +48,6 @@ func connectDB() (conn *sql.DB) {
 
 type ApiConfig struct {
 	DB *database.Queries
-}
-
-// middleware to pass database using context to all handlers
-func (cfg *ApiConfig) ApiMiddleware(next http.Handler) http.Handler {
-	fun := func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "config", cfg)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-
-	return http.HandlerFunc(fun)
 }
 
 func main() {
@@ -73,7 +62,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Use(apiConfig.ApiMiddleware)
+	router.Use(apiConfig.ApiContext)
 
 	handler := &Handler{
 		v1: &V1{},
@@ -87,6 +76,12 @@ func main() {
 	router.Route("/v1", func(v1 chi.Router) {
 		// v1.Get("/", handler.v1.root)
 		v1.Post("/user", handler.v1.createUser)
+
+		// authonly routes
+		v1.Group(func(v1Auth chi.Router) {
+			v1Auth.Use(authorizedOnly)
+			v1Auth.Get("/user", handler.v1.getUser)
+		})
 	})
 
 	runServer(router)

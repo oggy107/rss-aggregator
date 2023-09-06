@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -13,17 +13,12 @@ import (
 // }
 
 // log formated string
-func logNonFatal(format string, a ...any) {
+func LogNonFatal(format string, a ...any) {
 	log.Print("[ERROR]: ", fmt.Sprintf(format, a...))
 }
 
 // logs formated string or error and exits
 // accepts error as error.String()
-func logFatal(error string, a ...any) {
+func LogFatal(error string, a ...any) {
 	log.Fatal("[ERROR]: ", fmt.Sprintf(error, a...))
 }
-
-// logs error and exits
-// func logFatalError(err error) {
-// 	log.Fatal("[ERROR]: ", err)
-// }

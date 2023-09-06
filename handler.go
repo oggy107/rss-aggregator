@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/oggy107/rss-aggregator/internal/database"
+	"github.com/oggy107/rss-aggregator/respond"
+	"github.com/oggy107/rss-aggregator/utils"
 )
 
 type V1 struct{}
@@ -15,7 +19,7 @@ type Handler struct {
 func (h Handler) pong(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{"data": "pong"}
 
-	respondWithJson(w, 200, data)
+	respond.WithJson(w, 200, data)
 }
 
 // func (v1 V1) root(w http.ResponseWriter, r *http.Request) {
@@ -33,25 +37,37 @@ func (v1 V1) createUser(w http.ResponseWriter, r *http.Request) {
 	decodeErr := json.NewDecoder(r.Body).Decode(&parameters)
 
 	if decodeErr != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", decodeErr))
+		respond.WithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", decodeErr))
 		return
 	}
 
 	if parameters.Name == "" {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload: name is required")
+		respond.WithError(w, http.StatusBadRequest, "Invalid request payload: name is required")
 		return
 	}
 
 	ctx := r.Context()
 
-	config := ctx.Value("config").(*ApiConfig)
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
 	newUser, err := config.DB.CreateUser(ctx, parameters.Name)
 
 	if err != nil {
-		logNonFatal(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
-	respondWithJson(w, 200, databaseUsertoUser(newUser))
+	respond.WithJson(w, http.StatusCreated, databaseUsertoUser(newUser))
+}
+
+func (v1 V1) getUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	user, ok := ctx.Value(USER_CTX).(database.User)
+
+	if !ok {
+		respond.WithError(w, http.StatusUnauthorized, "Unauthorized")
+	}
+
+	respond.WithJson(w, http.StatusOK, databaseUsertoUser(user))
 }
