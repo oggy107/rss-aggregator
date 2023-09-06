@@ -13,16 +13,17 @@ import (
 // }
 
 // log formated string
-func logError(format string, a ...any) {
+func logNonFatal(format string, a ...any) {
 	log.Print("[ERROR]: ", fmt.Sprintf(format, a...))
 }
 
-// logs formated string and exits
-func logFatal(format string, a ...any) {
-	log.Fatal("[ERROR]: ", fmt.Sprintf(format, a...))
+// logs formated string or error and exits
+// accepts error as error.String()
+func logFatal(error string, a ...any) {
+	log.Fatal("[ERROR]: ", fmt.Sprintf(error, a...))
 }
 
 // logs error and exits
-func logFatalError(err error) {
-	log.Fatal("[ERROR]: ", err)
-}
+// func logFatalError(err error) {
+// 	log.Fatal("[ERROR]: ", err)
+// }
