@@ -12,10 +12,17 @@ import (
 // 	}
 // }
 
+// log formated string
 func logError(format string, a ...any) {
 	log.Print("[ERROR]: ", fmt.Sprintf(format, a...))
 }
 
+// logs formated string and exits
 func logFatal(format string, a ...any) {
 	log.Fatal("[ERROR]: ", fmt.Sprintf(format, a...))
+}
+
+// logs error and exits
+func logFatalError(err error) {
+	log.Fatal("[ERROR]: ", err)
 }
