@@ -81,6 +81,7 @@ func main() {
 		v1.Group(func(v1Auth chi.Router) {
 			v1Auth.Use(authorizedOnly)
 			v1Auth.Get("/user", handler.v1.getUser)
+			v1Auth.Post("/feed", handler.v1.createFeed)
 		})
 	})
 
