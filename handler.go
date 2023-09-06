@@ -117,3 +117,30 @@ func (v1 V1) createFeed(w http.ResponseWriter, r *http.Request) {
 
 	respond.WithJson(w, http.StatusCreated, databaseFeedtoFeed(newFeed))
 }
+
+// authorizedOnly
+func (v1 V1) getFeeds(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	user := ctx.Value(USER_CTX).(database.User)
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
+
+	feeds, err := config.DB.GetFeeds(ctx, uuid.NullUUID{
+		UUID:  user.ID,
+		Valid: true,
+	})
+
+	if err != nil {
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	parsedFeeds := []Feed{}
+
+	for _, feed := range feeds {
+		parsedFeeds = append(parsedFeeds, databaseFeedtoFeed(feed))
+	}
+
+	respond.WithJson(w, http.StatusOK, parsedFeeds)
+}

@@ -82,6 +82,7 @@ func main() {
 			v1Auth.Use(authorizedOnly)
 			v1Auth.Get("/user", handler.v1.getUser)
 			v1Auth.Post("/feed", handler.v1.createFeed)
+			v1Auth.Get("/feeds", handler.v1.getFeeds)
 		})
 	})
 
