@@ -2,14 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 )
-
-func logError(format string, a ...any) {
-	log.Print("[ERROR]: ", fmt.Sprintf(format, a...))
-}
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	if code > 499 {
