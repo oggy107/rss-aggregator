@@ -60,6 +60,7 @@ func (v1 V1) createUser(w http.ResponseWriter, r *http.Request) {
 	respond.WithJson(w, http.StatusCreated, databaseUsertoUser(newUser))
 }
 
+// authorizedOnly
 func (v1 V1) getUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
