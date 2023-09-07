@@ -50,6 +50,10 @@ type ApiConfig struct {
 	DB *database.Queries
 }
 
+// TODO: create seprate package to for handlers to organize code
+// TODO: need to create seprate package for apiConfig and middleware to finish first todo
+// TODO: suggestion: rather than creating a middleware method on apiConfig. create a function in apiConfig that returns the pointer to apiConfig struct
+
 func main() {
 	godotenv.Load(".env")
 
