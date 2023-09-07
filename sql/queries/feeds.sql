@@ -4,3 +4,6 @@ RETURNING *;
 
 -- name: GetFeeds :many
 SELECT * FROM feeds WHERE user_id = $1 ORDER BY updated_at DESC;
+
+-- name: GetFeed :one
+SELECT * FROM feeds WHERE id = $1;
