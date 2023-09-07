@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/oggy107/rss-aggregator/internal/database"
@@ -119,12 +122,33 @@ func (v1 V1) createFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (v1 V1) getFeed(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.RequestURI)
-	fmt.Println(r.URL.Query())
-	fmt.Println(r.URL.RawQuery)
-	fmt.Println(r.URL.Path)
+	rawFeedId := strings.Split(r.RequestURI, "/")[3]
 
-	respond.WithError(w, http.StatusOK, "Not implemented")
+	feedId, uuidParseErr := uuid.Parse(rawFeedId)
+
+	if uuidParseErr != nil {
+		respond.WithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", uuidParseErr))
+		return
+	}
+
+	ctx := r.Context()
+
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
+
+	feed, err := config.DB.GetFeed(ctx, feedId)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respond.WithError(w, http.StatusNotFound, fmt.Sprintf("Feed with id %v not found", feedId))
+			return
+		}
+
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	respond.WithJson(w, http.StatusOK, databaseFeedtoFeed(feed))
 }
 
 // authorizedOnly
