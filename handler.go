@@ -118,6 +118,15 @@ func (v1 V1) createFeed(w http.ResponseWriter, r *http.Request) {
 	respond.WithJson(w, http.StatusCreated, databaseFeedtoFeed(newFeed))
 }
 
+func (v1 V1) getFeed(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.RequestURI)
+	fmt.Println(r.URL.Query())
+	fmt.Println(r.URL.RawQuery)
+	fmt.Println(r.URL.Path)
+
+	respond.WithError(w, http.StatusOK, "Not implemented")
+}
+
 // authorizedOnly
 func (v1 V1) getFeeds(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
