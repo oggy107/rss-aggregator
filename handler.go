@@ -163,11 +163,21 @@ func (v1 V1) getFeeds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parsedFeeds := []Feed{}
+	respond.WithJson(w, http.StatusOK, databaseFeedsToFeeds(feeds))
+}
 
-	for _, feed := range feeds {
-		parsedFeeds = append(parsedFeeds, databaseFeedtoFeed(feed))
+func (v1 V1) getAllFeeds(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
+
+	feeds, err := config.DB.GetAllFeeds(ctx)
+
+	if err != nil {
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
 	}
 
-	respond.WithJson(w, http.StatusOK, parsedFeeds)
+	respond.WithJson(w, http.StatusOK, databaseFeedsToFeeds(feeds))
 }

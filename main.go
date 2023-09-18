@@ -80,6 +80,7 @@ func main() {
 	router.Route("/v1", func(v1 chi.Router) {
 		// v1.Get("/", handler.v1.root)
 		v1.Post("/user", handler.v1.createUser)
+		v1.Get("/all_feeds", handler.v1.getAllFeeds)
 
 		// authonly routes
 		v1.Group(func(v1Auth chi.Router) {
