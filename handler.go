@@ -181,3 +181,48 @@ func (v1 V1) getAllFeeds(w http.ResponseWriter, r *http.Request) {
 
 	respond.WithJson(w, http.StatusOK, databaseFeedsToFeeds(feeds))
 }
+
+// authorizedOnly
+func (v1 V1) CreateFeedFollows(w http.ResponseWriter, r *http.Request) {
+	type Parameters struct {
+		FeedId string `json:"feed_id"`
+	}
+
+	var parameters Parameters
+	decodeErr := json.NewDecoder(r.Body).Decode(&parameters)
+
+	if decodeErr != nil {
+		respond.WithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", decodeErr))
+		return
+	}
+
+	if parameters.FeedId == "" {
+		respond.WithError(w, http.StatusBadRequest, "Invalid request payload: feed_id is required")
+		return
+	}
+
+	ctx := r.Context()
+
+	user := ctx.Value(USER_CTX).(database.User)
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
+
+	feedId, uuidParseErr := uuid.Parse(parameters.FeedId)
+
+	if uuidParseErr != nil {
+		respond.WithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request payload: %v", uuidParseErr))
+		return
+	}
+
+	feedFollow, err := config.DB.CreateFeedFollows(ctx, database.CreateFeedFollowsParams{
+		UserID: user.ID,
+		FeedID: feedId,
+	})
+
+	if err != nil {
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	respond.WithJson(w, http.StatusOK, databaseFeedFollowToFeedFollow(feedFollow))
+}
