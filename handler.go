@@ -26,12 +26,6 @@ func (h Handler) pong(w http.ResponseWriter, r *http.Request) {
 	respond.WithJson(w, 200, data)
 }
 
-// func (v1 V1) root(w http.ResponseWriter, r *http.Request) {
-// 	data := map[string]string{"v1": "root", "age": "30"}
-
-// 	respondWithJson(w, 200, data)
-// }
-
 func (v1 V1) createUser(w http.ResponseWriter, r *http.Request) {
 	type Parameters struct {
 		Name string `json:"name"`
