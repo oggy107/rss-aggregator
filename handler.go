@@ -226,3 +226,21 @@ func (v1 V1) CreateFeedFollows(w http.ResponseWriter, r *http.Request) {
 
 	respond.WithJson(w, http.StatusOK, databaseFeedFollowToFeedFollow(feedFollow))
 }
+
+// authorizedOnly
+func (v1 V1) getFeedFollows(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	user := ctx.Value(USER_CTX).(database.User)
+	config := ctx.Value(CONFIG_CTX).(*ApiConfig)
+
+	feedFollows, err := config.DB.GetFeedFollows(ctx, user.ID)
+
+	if err != nil {
+		utils.LogNonFatal(err.Error())
+		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	respond.WithJson(w, http.StatusOK, databaseFeedFollowsToFeedFollows(feedFollows))
+}
