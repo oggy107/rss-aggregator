@@ -4,12 +4,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/oggy107/rss-aggregator/config"
 	"github.com/oggy107/rss-aggregator/handler"
+	"github.com/oggy107/rss-aggregator/scraper"
 	"github.com/oggy107/rss-aggregator/utils"
 )
 
@@ -32,10 +34,13 @@ func runServer(router *chi.Mux) {
 
 func main() {
 	godotenv.Load(".env")
+	apiConfig := config.Init()
 
 	router := chi.NewRouter()
 
-	router.Use(getApiContext(config.Init()))
+	router.Use(getApiContext(apiConfig))
+
+	go scraper.Start(apiConfig.DB, 10, time.Minute)
 
 	v1Handler := handler.GetV1()
 
