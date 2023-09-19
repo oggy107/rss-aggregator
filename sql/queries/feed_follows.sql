@@ -4,3 +4,6 @@ RETURNING *;
 
 -- name: GetFeedFollows :many
 SELECT * FROM feed_follows WHERE user_id = $1 ORDER BY updated_at DESC;
+
+-- name: DeleteFeedFollows :exec
+DELETE FROM feed_follows WHERE id = $1 AND user_id = $2;

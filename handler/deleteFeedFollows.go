@@ -1,20 +1,19 @@
 package handler
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/oggy107/rss-aggregator/config"
+	"github.com/oggy107/rss-aggregator/internal/database"
 	"github.com/oggy107/rss-aggregator/respond"
 	"github.com/oggy107/rss-aggregator/utils"
 )
 
-func (v v1) GetFeed(w http.ResponseWriter, r *http.Request) {
-	// rawFeedId := strings.Split(r.RequestURI, "/")[3]
+// authorizedOnly
+func (v v1) DeleteFeedFollows(w http.ResponseWriter, r *http.Request) {
 	rawFeedId := chi.URLParam(r, "feed_id")
 
 	feedId, uuidParseErr := uuid.Parse(rawFeedId)
@@ -26,20 +25,19 @@ func (v v1) GetFeed(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	config := ctx.Value(config.CONFIG_CTX).(*config.ApiConfig)
+	apiConfig := ctx.Value(config.CONFIG_CTX).(*config.ApiConfig)
+	user := ctx.Value(config.USER_CTX).(database.User)
 
-	feed, err := config.DB.GetFeed(ctx, feedId)
+	err := apiConfig.DB.DeleteFeedFollows(ctx, database.DeleteFeedFollowsParams{
+		ID:     feedId,
+		UserID: user.ID,
+	})
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			respond.WithError(w, http.StatusNotFound, fmt.Sprintf("Feed with id %v not found", feedId))
-			return
-		}
-
 		utils.LogNonFatal(err.Error())
 		respond.WithError(w, http.StatusInternalServerError, "Something went wrong")
 		return
 	}
 
-	respond.WithJson(w, http.StatusOK, databaseFeedtoFeed(feed))
+	respond.WithJson(w, http.StatusOK, map[string]bool{"success": true})
 }

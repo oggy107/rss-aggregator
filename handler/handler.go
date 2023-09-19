@@ -13,7 +13,5 @@ func GetV1() v1 {
 }
 
 func Pong(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{"data": "pong"}
-
-	respond.WithJson(w, 200, data)
+	respond.WithJson(w, 200, map[string]string{"data": "pong"})
 }

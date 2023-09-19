@@ -33,16 +33,15 @@ func runServer(router *chi.Mux) {
 func main() {
 	godotenv.Load(".env")
 
-	apiConfig := config.Init()
-
 	router := chi.NewRouter()
 
-	router.Use(getApiContext(apiConfig))
+	router.Use(getApiContext(config.Init()))
 
 	v1Handler := handler.GetV1()
 
 	router.Get("/ping", handler.Pong)
 
+	// v1 routes
 	router.Route("/v1", func(v1 chi.Router) {
 		v1.Post("/user", v1Handler.CreateUser)
 		v1.Get("/all_feeds", v1Handler.GetAllFeeds)
@@ -56,6 +55,7 @@ func main() {
 			v1Auth.Get("/feeds", v1Handler.GetFeeds)
 			v1Auth.Post("/feed_follows", v1Handler.CreateFeedFollows)
 			v1Auth.Get("/feed_follows", v1Handler.GetFeedFollows)
+			v1Auth.Delete("/feed_follows/{feed_id}", v1Handler.DeleteFeedFollows)
 		})
 	})
 
