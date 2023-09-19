@@ -61,6 +61,7 @@ func main() {
 			v1Auth.Post("/feed_follows", v1Handler.CreateFeedFollows)
 			v1Auth.Get("/feed_follows", v1Handler.GetFeedFollows)
 			v1Auth.Delete("/feed_follows/{feed_id}", v1Handler.DeleteFeedFollows)
+			v1Auth.Get("/posts", v1Handler.GetPostsForUser)
 		})
 	})
 
