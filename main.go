@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -9,7 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/oggy107/rss-aggregator/internal/database"
+	"github.com/oggy107/rss-aggregator/config"
+	"github.com/oggy107/rss-aggregator/handler"
 	"github.com/oggy107/rss-aggregator/utils"
 )
 
@@ -30,67 +30,32 @@ func runServer(router *chi.Mux) {
 	}
 }
 
-func connectDB() (conn *sql.DB) {
-	CONNECTION_STRING := os.Getenv("POSTGRES_CONNECTION")
-
-	if CONNECTION_STRING == "" {
-		utils.LogFatal("Database connection string is not set")
-	}
-
-	conn, err := sql.Open("postgres", CONNECTION_STRING)
-
-	if err != nil {
-		utils.LogFatal(err.Error())
-	}
-
-	return conn
-}
-
-type ApiConfig struct {
-	DB *database.Queries
-}
-
-// TODO: create seprate package to for handlers to organize code
-// TODO: need to create seprate package for apiConfig and middleware to finish first todo
-// TODO: suggestion: rather than creating a middleware method on apiConfig. create a function in apiConfig that returns the pointer to apiConfig struct
-
 func main() {
 	godotenv.Load(".env")
 
-	conn := connectDB()
-	defer conn.Close()
-
-	apiConfig := &ApiConfig{
-		DB: database.New(conn),
-	}
+	apiConfig := config.Init()
 
 	router := chi.NewRouter()
 
-	router.Use(apiConfig.ApiContext)
+	router.Use(getApiContext(apiConfig))
 
-	handler := &Handler{
-		v1: &V1{},
-	}
+	v1Handler := handler.GetV1()
 
-	router.Get("/ping", handler.pong)
-	// router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	http.Redirect(w, r, "/v1", http.StatusFound)
-	// })
+	router.Get("/ping", handler.Pong)
 
 	router.Route("/v1", func(v1 chi.Router) {
-		// v1.Get("/", handler.v1.root)
-		v1.Post("/user", handler.v1.createUser)
-		v1.Get("/all_feeds", handler.v1.getAllFeeds)
+		v1.Post("/user", v1Handler.CreateUser)
+		v1.Get("/all_feeds", v1Handler.GetAllFeeds)
 
 		// authonly routes
 		v1.Group(func(v1Auth chi.Router) {
 			v1Auth.Use(authorizedOnly)
-			v1Auth.Get("/user", handler.v1.getUser)
-			v1Auth.Post("/feed", handler.v1.createFeed)
-			v1Auth.Get("/feed/{feed_id}", handler.v1.getFeed)
-			v1Auth.Get("/feeds", handler.v1.getFeeds)
-			v1Auth.Post("/feed_follows", handler.v1.CreateFeedFollows)
-			v1Auth.Get("/feed_follows", handler.v1.getFeedFollows)
+			v1Auth.Get("/user", v1Handler.GetUser)
+			v1Auth.Post("/feed", v1Handler.CreateFeed)
+			v1Auth.Get("/feed/{feed_id}", v1Handler.GetFeed)
+			v1Auth.Get("/feeds", v1Handler.GetFeeds)
+			v1Auth.Post("/feed_follows", v1Handler.CreateFeedFollows)
+			v1Auth.Get("/feed_follows", v1Handler.GetFeedFollows)
 		})
 	})
 

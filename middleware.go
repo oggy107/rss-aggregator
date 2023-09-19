@@ -4,22 +4,21 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/oggy107/rss-aggregator/config"
 	"github.com/oggy107/rss-aggregator/internal/auth"
 	"github.com/oggy107/rss-aggregator/respond"
 )
 
-const CONFIG_CTX = "config"
-const USER_CTX = "user"
+func getApiContext(cfg *config.ApiConfig) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), config.CONFIG_CTX, cfg)
 
-// middleware to pass database using context to all handlers
-func (cfg *ApiConfig) ApiContext(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), CONFIG_CTX, cfg)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		return http.HandlerFunc(fn)
 	}
-
-	return http.HandlerFunc(fn)
 }
 
 func authorizedOnly(next http.Handler) http.Handler {
@@ -33,15 +32,15 @@ func authorizedOnly(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		config := ctx.Value("config").(*ApiConfig)
-		user, err := config.DB.GetUserByAPIKey(ctx, apiKey)
+		apiConfig := ctx.Value(config.CONFIG_CTX).(*config.ApiConfig)
+		user, err := apiConfig.DB.GetUserByAPIKey(ctx, apiKey)
 
 		if err != nil {
 			respond.WithError(w, http.StatusUnauthorized, auth.InvalidApiKey{}.Error())
 			return
 		}
 
-		userCtx := context.WithValue(ctx, USER_CTX, user)
+		userCtx := context.WithValue(ctx, config.USER_CTX, user)
 
 		next.ServeHTTP(w, r.WithContext(userCtx))
 	}
